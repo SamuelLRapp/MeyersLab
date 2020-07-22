@@ -1,0 +1,93 @@
+---
+title: "rGlobi- CALeDNA data"
+output: html_document
+---
+Install Library rglobi
+```{r}
+library(rglobi)
+library(tidyverse)
+```
+
+import taxnomy data file
+```{r}
+read.delim()
+```
+Function outputs true or false, when given the output of the rGlobi function get_interactions_by_taxa(, , showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
+```{r}
+do_they_interact <-  function(rGlobiResult)
+{
+  NUMBER_OF_INTERACTIONS <- nrow(rGlobiResult)
+  if(NUMBER_OF_INTERACTIONS<1)
+  {
+    OUTPUT <- FALSE
+  }
+  else {
+    OUTPUT <- TRUE
+    
+  }
+  return(OUTPUT)
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
