@@ -17,6 +17,11 @@ taxonomy_only_table <-select(taxonomytable, sum.taxonomy) %>%
   separate(sum.taxonomy, c("phylum", "class", "order", "family", "genus", "species"), sep = ";",remove=FALSE)
   #change taxon data to only have genus_spp, what rGlobi accepts as an argument
 
+
+species_column_number <- which(colnames(taxonomy_only_table)=="species")
+genus_column_number <- which(colnames(taxonomy_only_table)=="genus")
+#values used later for naming columns/rows in matrix
+
 number_eDNA_spp <-nrow(taxonomy_only_table)
 ```
 
@@ -30,21 +35,41 @@ Spit out some summary stats of that
 
 create dataframe/matrixs that match the length of the lists:
 ```{r}
-BinaryMatrix <- matrix(, number_eDNA_spp, number_eDNA_spp)
-colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table
 #matrix to hold true false values
+BinaryMatrix <- matrix(NA, number_eDNA_spp, number_eDNA_spp)
+#add species names to the columns/rows 
+colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,species_column_number]
+rownames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,species_column_number]
 #matrix to hold interaction value 
+InteractionMatrix <-matrix(NA, number_eDNA_spp,number_eDNA_spp)
+colnames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,species_column_number]
+rownames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,species_column_number]
 ```
 
 take list and run it through a nested for loop to populate a matrix...
 ```{r}
-for(i in 1:n)
+for(i in 1:number_eDNA_spp)
 {
-  for(j in i:n)
+  for(j in i:number_eDNA_spp)
   {
-  result<-get_interactions_by_taxa(eDNAlist[[i]],eDNAlist[[j]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
-  #be careful about the limit, you have to make sure were only comparing  species to another at a time. If we are comparing lists and we write limit we may loss results
-  #
+  #create genus_spp string by combining(or pasting results) from the taxonomy columns
+  source_species <- paste(taxonomy_only_table[i,genus_column_number], taxonomy_only_table[i,species_column_number], sep=" ")
+  target_species <-paste(taxonomy_only_table[j,genus_column_number], taxonomy_only_table[j,species_column_number],sep=" ")
+
+  interaction_result <-get_interactions_by_taxa(source_species, target_species, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+  #be careful about the limit, you have to make sure were only comparing  species to another at a time. If we are comparing lists and we write limit we   may loss results
+  
+  if(TRUE==do_they_interact(interaction_result))
+  {
+    BinaryMatrix[i][j]<-TRUE
+    InteractionMatrix[i][j]<-how_they_interact(interaction_result)
+  }
+  else
+  {
+     BinaryMatrix[i][j]<-FALSE
+     InteractionMatrix[i][j]<-FALSE
+  }
+#BinaryMatrix[i][j]<-do_they_interact(interaction_result)
   #fill T/F matrix[][] =do_they_interact(result)
  # if true
   #fill value matrix[][]=how_they_interact(result)
