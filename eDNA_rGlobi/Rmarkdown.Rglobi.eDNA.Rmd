@@ -6,13 +6,18 @@ Install Library rglobi
 ```{r}
 library(rglobi)
 library(tidyverse)
+library(dplyr)
 ```
 
 import taxnomy data file and create lists for- eDNA file (we will only work we eDNA results in v1) then add iNat File
 ```{r}
-taxonomytable<-read.delim("LA_river_taxnomy_table-Sheet1.txt")
-rea
-#change taxon data to only have genus_spp, what rGlobi accepts as an argument
+taxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_taxnomy_table.txt")
+class(taxonomytable) #dataframe
+taxonomy_only_table <-select(taxonomytable, sum.taxonomy) %>% 
+  separate(sum.taxonomy, c("phylum", "class", "order", "family", "genus", "species"), sep = ";",remove=FALSE)
+  #change taxon data to only have genus_spp, what rGlobi accepts as an argument
+
+number_eDNA_spp <-nrow(taxonomy_only_table)
 ```
 
 (this step can be skipped in V1)
@@ -23,8 +28,10 @@ Spit out some summary stats of that
 ```
 
 
-create matrixs that match the length of the lists:
+create dataframe/matrixs that match the length of the lists:
 ```{r}
+BinaryMatrix <- matrix(, number_eDNA_spp, number_eDNA_spp)
+colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table
 #matrix to hold true false values
 #matrix to hold interaction value 
 ```
