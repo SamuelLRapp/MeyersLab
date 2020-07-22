@@ -8,10 +8,48 @@ library(rglobi)
 library(tidyverse)
 ```
 
-import taxnomy data file
+import taxnomy data file and create lists for- eDNA file (we will only work we eDNA results in v1) then add iNat File
 ```{r}
-read.delim()
+taxonomytable<-read.delim("LA_river_taxnomy_table-Sheet1.txt")
+rea
+#change taxon data to only have genus_spp, what rGlobi accepts as an argument
 ```
+
+(this step can be skipped in V1)
+compare two lists and create 3rd list of species shared in eDNA and iNat results 
+Spit out some summary stats of that 
+```{r}
+#list vs list -> new list
+```
+
+
+create matrixs that match the length of the lists:
+```{r}
+#matrix to hold true false values
+#matrix to hold interaction value 
+```
+
+take list and run it through a nested for loop to populate a matrix...
+```{r}
+for(i in 1:n)
+{
+  for(j in i:n)
+  {
+  result<-get_interactions_by_taxa(eDNAlist[[i]],eDNAlist[[j]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+  #be careful about the limit, you have to make sure were only comparing  species to another at a time. If we are comparing lists and we write limit we may loss results
+  #
+  #fill T/F matrix[][] =do_they_interact(result)
+ # if true
+  #fill value matrix[][]=how_they_interact(result)
+  #else ##if false
+  #fill matrix[][]="NA"
+  }
+}
+
+
+```
+
+
 Function outputs true or false, when given the output of the rGlobi function get_interactions_by_taxa(, , showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
 ```{r}
 do_they_interact <-  function(rGlobiResult)
@@ -29,65 +67,61 @@ do_they_interact <-  function(rGlobiResult)
 }
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+function returns the dataframe cell that holds the first interaction type result from a rGlobi get_interactions_by_taxa. It will return NA if the species don't interact
+```{r}
+how_they_interact <-  function(rGlobiResult)
+{
+    INTERACTION <- rGlobiResult[1,2] 
+    #should be the proper cell/index in the dataframe, if this formatting is used
+    #get_interactions_by_taxa(taxa1,taxa2, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+    return(INTERACTION)
+}
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+print out T/F matrix and print out 1st interaction matrix
+```{r}
+#print()
+#print()
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+print out global counts
+```{r}
+#number of interactions between groups
+#interaction rate amoung/between groups...
+#species with greatest number of interactions... (could write a function that reads a t/f matrix easily)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

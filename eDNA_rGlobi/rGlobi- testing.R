@@ -21,20 +21,34 @@ get_interactions_by_taxa("Pisaster ochraceus", "nucella canaliculata")
 get_interaction_types()
 get_interaction_matrix("Homo sapiens", "Mammalia", "interactsWith")
 
-y<-list("Forcipulatida Pisaster ochraceus","Strongylocentrotus purpuratus")
+y<-list("Pisaster ochraceus","Strongylocentrotus purpuratus")
 x<-list("Larus occidentalis","Tegula funebralis","Mytilus californianus")
+get_interactions_by_taxa(x,y, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1))
 get_interactions_by_taxa(x,y, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
-w<-get_interactions_by_taxa(y[[1]],x[[3]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
+
+w<-get_interactions_by_taxa(x[[1]],y[[2]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1))
 none<-get_interactions_by_taxa(y[[2]],x[[3]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
 q<-get_interaction_matrix(x, y)#interaction.type = "eats"
-q
-none
 w
+none
+ncol(w)
+nrow(w)
+w[1,2]
+w[2][2]
+how_they_interact(w)
+how_they_interact(none)
+get_interactions_by_taxa("Mytilus californianus")
+get_interaction_matrix(source.taxon.names = "Homo sapiens",
+                       target.taxon.names = "Mammalia", interaction.type = "coOccursWith")
 
-
-
-)
+get_interaction_types()
+get_data_fields()
 filter(none)
+get_interactions(taxon = "Homo sapiens", interaction.type = "preysOn")
+get_interaction_table(x, y)
+
+
+get_data_fields()
 
 str
 
@@ -57,6 +71,8 @@ do_they_interact <-  function(rGlobiResult)
     }
  return(OUTPUT)
 }
+
+
 
 
 opts()

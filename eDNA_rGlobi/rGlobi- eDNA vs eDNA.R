@@ -15,6 +15,7 @@ do_they_interact <-  function(rGlobiResult)
 }
 
 
+
 #can make a variable that counts number of interactions
 #what else do we want? 
 #summary stats: Number of each type of interaction, 
