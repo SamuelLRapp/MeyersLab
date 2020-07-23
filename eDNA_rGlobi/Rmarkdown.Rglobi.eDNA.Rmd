@@ -12,7 +12,6 @@ library(dplyr)
 import taxnomy data file and create lists for- eDNA file (we will only work we eDNA results in v1) then add iNat File
 ```{r}
 taxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_taxnomy_table.txt")
-class(taxonomytable) #dataframe
 taxonomy_only_table <-select(taxonomytable, sum.taxonomy) %>% 
   separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus species"), sep = ";",remove=FALSE)
   #change taxon data to only have genus_spp, what rGlobi accepts as an argument
@@ -40,7 +39,7 @@ BinaryMatrix <- matrix(NA, number_eDNA_spp, number_eDNA_spp)
 colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 rownames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 #matrix to hold interaction value 
-InteractionMatrix <-matrix(NA, number_eDNA_spp,number_eDNA_spp)
+InteractionMatrix <- matrix(NA, number_eDNA_spp,number_eDNA_spp)
 colnames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 rownames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 ```
@@ -75,17 +74,12 @@ how_they_interact <-  function(rGlobiResult)
 ```
 
 
-
-
 take list and run it through a nested for loop to populate a matrix...
 ```{r}
 for(i in 1:number_eDNA_spp)
 {
-  for(j in i:number_eDNA_spp)
-  {
-    
-    
-    if(taxonomy_only_table[i,genus_species_column_number] == "") #no genus-species value
+ 
+  if(taxonomy_only_table[i,genus_species_column_number] == "" ||  is.null(taxonomy_only_table[i,genus_species_column_number])) #no genus-species value
     {
       source_species <- taxonomy_only_table[i,genus_column_number]
     }
@@ -93,7 +87,9 @@ for(i in 1:number_eDNA_spp)
        {
         source_species <- taxonomy_only_table[i,genus_species_column_number]
        }
-    
+  
+  for(j in i:number_eDNA_spp)
+  {
     if(taxonomy_only_table[j,genus_species_column_number]=="")
     {
       target_species <- taxonomy_only_table[j,genus_column_number]
@@ -102,7 +98,14 @@ for(i in 1:number_eDNA_spp)
     {
       target_species<-taxonomy_only_table[j,genus_species_column_number]
     }
-    
+    # print ("source species")
+    # print( source_species)
+    # print("target species")
+    # print(target_species)
+    # 
+    # print(i)
+    # print(j)
+    # 
      #create genus_spp string by combining(or pasting results) from the taxonomy columns
  ## source_species <- paste(taxonomy_only_table[i,genus_column_number], taxonomy_only_table[i,genus_species_column_number], sep=" ")
   ##target_species <-paste(taxonomy_only_table[j,genus_column_number], taxonomy_only_table[j,genus_species_column_number],sep=" ")
@@ -112,13 +115,15 @@ for(i in 1:number_eDNA_spp)
   
   if(TRUE==do_they_interact(interaction_result))
   {
-    BinaryMatrix[i][j]<-TRUE
-    InteractionMatrix[i][j]<-how_they_interact(interaction_result)
+    BinaryMatrix[i,j]<-1#true
+    InteractionMatrix[i,j]<-how_they_interact(interaction_result)
+    print(how_they_interact(interaction_result))
   }
   else
   {
-     BinaryMatrix[i][j]<-FALSE
-     InteractionMatrix[i][j]<-FALSE
+     BinaryMatrix[i,j]<-0#FALSE
+     InteractionMatrix[i,j]<-"NA"
+     # print("NA")
   }
 #BinaryMatrix[i][j]<-do_they_interact(interaction_result)
   #fill T/F matrix[][] =do_they_interact(result)
