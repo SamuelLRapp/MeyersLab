@@ -26,6 +26,9 @@ x<-list("Larus occidentalis","Tegula funebralis","Mytilus californianus")
 get_interactions_by_taxa(x,y, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1))
 get_interactions_by_taxa(x,y, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
 
+get_interactions_by_taxa("Strongylocentrotus purpuratus", "Larus occidentalis", showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1))
+get_interactions_by_taxa("Strongylocentrotus", "Larus", showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=50))
+
 w<-get_interactions_by_taxa(x[[1]],y[[2]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1))
 none<-get_interactions_by_taxa(y[[2]],x[[3]], showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
 q<-get_interaction_matrix(x, y)#interaction.type = "eats"
