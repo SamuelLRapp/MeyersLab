@@ -20,6 +20,10 @@ get_interactions_by_taxa("Pisaster ochraceus", "Mytilus californianusss")
 get_interactions_by_taxa("Pisaster ochraceus", "nucella canaliculata")
 get_interaction_types()
 get_interaction_matrix("Homo sapiens", "Mammalia", "interactsWith")
+v1<-""
+v2<-""
+ interaction_result2 <-get_interactions_by_taxa(v2,v1, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=10))
+ interaction_result2
 
 y<-list("Pisaster ochraceus","Strongylocentrotus purpuratus")
 x<-list("Larus occidentalis","Tegula funebralis","Mytilus californianus")

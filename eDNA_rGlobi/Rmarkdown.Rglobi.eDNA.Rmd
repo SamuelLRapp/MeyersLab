@@ -40,6 +40,7 @@ colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_co
 rownames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 #matrix to hold interaction value 
 InteractionMatrix <- matrix(NA, number_eDNA_spp,number_eDNA_spp)
+
 colnames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 rownames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
 ```
@@ -69,7 +70,11 @@ how_they_interact <-  function(rGlobiResult)
     INTERACTION <- rGlobiResult[1,2] 
     #should be the proper cell/index in the dataframe, if this formatting is used
     #get_interactions_by_taxa(taxa1,taxa2, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
-    return(INTERACTION)
+    Species <- rGlobiResult[1,1]
+    Species2<- rGlobiResult[1,3]
+    test<-paste0(INTERACTION, Species, Species2)
+    return(test)
+    # return(INTERACTION)
 }
 ```
 
@@ -78,46 +83,56 @@ take list and run it through a nested for loop to populate a matrix...
 ```{r}
 for(i in 1:number_eDNA_spp)
 {
- 
-  if(taxonomy_only_table[i,genus_species_column_number] == "" ||  is.null(taxonomy_only_table[i,genus_species_column_number])) #no genus-species value
+  if(""==(taxonomy_only_table[i,genus_species_column_number])) #no genus-species value
     {
       source_species <- taxonomy_only_table[i,genus_column_number]
+      print(paste0("I no spp ","row:",i," column:",genus_species_column_number, source_species))
+      
     }
        else
        {
         source_species <- taxonomy_only_table[i,genus_species_column_number]
+        print(paste0("I yes spp ","row:",i," column:",genus_species_column_number))
        }
   
-  for(j in i:number_eDNA_spp)
+  for(j in i:5)
   {
-    if(taxonomy_only_table[j,genus_species_column_number]=="")
+    if(""==(taxonomy_only_table[j,genus_species_column_number]))
     {
       target_species <- taxonomy_only_table[j,genus_column_number]
+      print(paste0("J no spp ","row:",j," column:",genus_species_column_number, target_species))
     }
     else
     {
       target_species<-taxonomy_only_table[j,genus_species_column_number]
+       print(paste0("J yes spp ","row:",j," column:",genus_species_column_number))
     }
-    # print ("source species")
-    # print( source_species)
-    # print("target species")
-    # print(target_species)
-    # 
-    # print(i)
-    # print(j)
-    # 
+   
+  
+   # p1<-is.null(taxonomy_only_table[1,3])
+   #  p1<-is.null(taxonomy_only_table[1,3])
+   #     print(p1)  
+   #     print( taxonomy_only_table[1,3] )
+   #     taxonomy_only_table[1,3] == ""
      #create genus_spp string by combining(or pasting results) from the taxonomy columns
  ## source_species <- paste(taxonomy_only_table[i,genus_column_number], taxonomy_only_table[i,genus_species_column_number], sep=" ")
   ##target_species <-paste(taxonomy_only_table[j,genus_column_number], taxonomy_only_table[j,genus_species_column_number],sep=" ")
 
   interaction_result <-get_interactions_by_taxa(source_species, target_species, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+  # v1<-""
+  # v2<-""
+  #  interaction_result2 <-get_interactions_by_taxa(v2,v1, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=10))
+  #  interaction_result2
   #be careful about the limit, you have to make sure were only comparing  species to another at a time. If we are comparing lists and we write limit we   may loss results
-  
+  x<-get_interactions_by_taxa("V3", "X", showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+  x
   if(TRUE==do_they_interact(interaction_result))
   {
     BinaryMatrix[i,j]<-1#true
     InteractionMatrix[i,j]<-how_they_interact(interaction_result)
     print(how_they_interact(interaction_result))
+     print(paste0("source species:", source_species))
+     print(paste0("target species:", target_species))
   }
   else
   {
