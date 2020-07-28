@@ -1,0 +1,256 @@
+---
+title: "rGlobi- CALeDNA 2 eDNA datasets"
+output: html_document
+---
+Install Library rglobi
+```{r}
+library(rglobi)
+library(tidyverse)
+library(dplyr)
+```
+
+import tax0nomy data file(s) and split the taxonomic hierarchy in individual columns 
+```{r}
+SourceTaxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_data/LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5_LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5.txt")
+Source_taxonomy_table <-select(SourceTaxonomytable, sum.taxonomy) %>% 
+  separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus species"), sep = ";",remove=FALSE)
+
+TargetTaxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_data/LA_river_CO1_ASV_sum_by_taxonomy_70_dc_ed_min5LA_river_CO1_ASV_sum_by_taxonomy_70_dc_ed_min5.txt")
+Target_taxonomy_table <-select(TargetTaxonomytable, sum.taxonomy) %>% 
+  separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus species"), sep = ";",remove=FALSE)
+```
+
+fill in "" empty values or "NA" in Source taxonomy table and Target taxonomy table
+```{r}
+genus_species_column_number <- which(colnames(Source_taxonomy_table) == "genus species")
+genus_column_number <- which(colnames(Source_taxonomy_table) == "genus")
+
+number_Source_spp <- nrow(Source_taxonomy_table)
+
+for(i in 1:number_Source_spp)
+{
+    if(Source_taxonomy_table[i,genus_species_column_number] == "" || Source_taxonomy_table[i,genus_species_column_number] == "NA")
+    {
+      Source_taxonomy_table[i,genus_species_column_number] = "Missing Spp-Genus"
+    }
+    if(Source_taxonomy_table[i,genus_column_number] == "" || Source_taxonomy_table[i, genus_column_number] == "NA")
+    {
+      Source_taxonomy_table[i,genus_column_number] = "Missing Genus"
+    }
+}
+
+number_Target_spp <- nrow(Target_taxonomy_table)
+
+for(i in 1:number_Target_spp)
+{
+  if(Target_taxonomy_table[i,genus_species_column_number] == "" || Target_taxonomy_table[i,genus_species_column_number] == "NA")
+  {
+    Target_taxonomy_table[i,genus_species_column_number] = "Missing Spp-Genus"
+  }
+  if(Target_taxonomy_table[i,genus_column_number] == "" || Target_taxonomy_table[i,genus_column_number] == "NA")
+  {
+    Target_taxonomy_table[i,genus_column_number] = "Missing Genus"
+  }
+}
+#filling in these locations helps prevent errors in rGlobi queries later on
+
+```
+
+
+(this step can be skipped in V1)
+compare two lists and create 3rd list of species shared in eDNA and iNat results 
+Spit out some summary stats of that 
+```{r}
+#list vs list -> new list
+```
+
+
+create dataframe/matrixs that match the length of the lists:
+```{r}
+#matrix to hold true false values
+BinaryMatrix <- matrix(NA, number_Source_spp, number_Target_spp)
+#add species names to the columns/rows 
+rownames(BinaryMatrix)[1:number_Source_spp]<-Source_taxonomy_table[,genus_species_column_number]
+colnames(BinaryMatrix)[1:number_Target_spp]<-Target_taxonomy_table[,genus_species_column_number]
+
+#matrix to hold interaction value 
+InteractionMatrix <- matrix(NA, number_Source_spp,number_Target_spp)
+#add species names to the columns/rows 
+rownames(InteractionMatrix)[1:number_Source_spp]<-Source_taxonomy_table[,genus_species_column_number]
+colnames(InteractionMatrix)[1:number_Target_spp]<-Target_taxonomy_table[,genus_species_column_number]
+```
+
+
+Function outputs true or false, when given the output of the rGlobi function get_interactions_by_taxa(, , showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
+```{r}
+do_they_interact <-  function(rGlobiResult)
+{
+  NUMBER_OF_INTERACTIONS <- nrow(rGlobiResult)
+  if(NUMBER_OF_INTERACTIONS<1)
+  {
+    OUTPUT <- FALSE
+  }
+  else {
+    OUTPUT <- TRUE
+    
+  }
+  return(OUTPUT)
+}
+```
+
+function returns the dataframe cell that holds the first interaction type result from a rGlobi get_interactions_by_taxa. It will return NA if the species don't interact
+```{r}
+how_they_interact <-  function(rGlobiResult)
+{
+    INTERACTION <- rGlobiResult[1,2] 
+    #should be the proper cell/index in the dataframe, if this formatting is used
+    #get_interactions_by_taxa(taxa1,taxa2, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+    Source_Species <- rGlobiResult[1,1]
+    Target_Species<- rGlobiResult[1,3]
+    test<-paste0(Source_Species," ", INTERACTION," ", Target_Species)
+    return(test)
+    # return(INTERACTION)
+}
+```
+
+
+take list and run it through a nested for loop to populate a matrix...
+```{r}
+for(i in 1:number_Source_spp)
+{
+  if("Missing Spp-Genus" == (Source_taxonomy_table[i,genus_species_column_number])) #no genus-species value
+    {
+      source_species <- Source_taxonomy_table[i,genus_column_number]
+     print(paste0("I no spp ","row:",i," column: ",genus_species_column_number, source_species))
+      
+    }
+       else
+       {
+        source_species <- Source_taxonomy_table[i,genus_species_column_number]
+       print(paste0("I yes spp ","row:",i," column:",genus_species_column_number))
+       }
+  
+  for(j in i:number_Target_spp)
+  {
+    if("Missing Spp-Genus" == (Target_taxonomy_table[j,genus_species_column_number]))
+    {
+      target_species <- Target_taxonomy_table[j,genus_column_number]
+     print(paste0("J no spp ","row:",j," column:",genus_species_column_number, target_species))
+    }
+    else
+    {
+      target_species<-Target_taxonomy_table[j,genus_species_column_number]
+       print(paste0("J yes spp ","row:",j," column: ",genus_species_column_number))
+    }
+
+  interaction_result <- get_interactions_by_taxa(source_species, target_species, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+
+    if(TRUE==do_they_interact(interaction_result))
+    {
+      BinaryMatrix[i,j]<-1#true
+      InteractionMatrix[i,j]<-how_they_interact(interaction_result)
+      print(how_they_interact(interaction_result))
+    }
+    else
+    {
+       BinaryMatrix[i,j]<-0#FALSE
+       InteractionMatrix[i,j]<-"NA"
+    }
+  }
+}
+
+
+```
+
+view BinaryMatrix & Interaction Matrix
+```{r}
+View(BinaryMatrix)
+View(InteractionMatrix)
+```
+
+sum of interactions: sums of columns and rows from BinaryMatrix
+```{r}
+sum_interactions_2group <-function(BinaryMatrix, summary_stats)
+{
+  number_of_species <- nrow(BinaryMatrix) + ncol(BinaryMatrix)
+  
+  sum_interactions_column_number <- which(colnames(summary_stats) == "sum_interactions")
+  
+  BMcolsums <- colSums(BinaryMatrix, na.rm= TRUE) #target
+  BMrowsums <- rowSums(BinaryMatrix, na.rm = TRUE) #source
+  
+  for(i in 1:nrow(BinaryMatrix)) #add source spp
+  {
+      summary_stats[i,sum_interactions_column_number] <- BMrowsums[[i]] #target
+  #    print(BMrowsums[[i]])
+  }
+  
+ for(i in 1:ncol(BinaryMatrix)) #add target spp
+   {
+  #  print(i+nrow(BinaryMatrix))
+    summary_stats[i+nrow(BinaryMatrix), sum_interactions_column_number] <- BMcolsums[[i]] #source
+#  print(BMcolsums[[i]])
+     }
+   return(summary_stats) 
+}
+ 
+```
+
+
+Summary Statistics off Binary Matrix
+```{r}
+total_number_species <- number_Target_spp + number_Source_spp
+summary_stats<-matrix(NA, total_number_species, 3) #depends on how many variables we want to work with,
+summary_stats_columns <- c("sum_interactions", "will add more functions later", "extra column")
+colnames(summary_stats)[1:3] <- summary_stats_columns
+#sum will be a good starting place
+summary_stats <- sum_interactions_2group(BinaryMatrix,summary_stats)
+#function find total number of interactions a species has...
+
+# rownames(summary_stats)[1:number_Source_spp] <- Source_taxonomy_table[,genus_species_column_number]
+source_list <- Source_taxonomy_table[,genus_species_column_number] 
+target_list <-  Target_taxonomy_table[,genus_species_column_number]
+list_combined <- c(source_list,target_list)
+rownames(summary_stats)[1:48] <- list_combined
+```
+
+print out global counts
+```{r}
+#number of interactions between groups
+#interaction rate amoung/between groups...
+#species with greatest number of interactions... (could write a function that reads a t/f matrix easily)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
