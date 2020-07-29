@@ -1,5 +1,5 @@
 ---
-title: "rGlobi- CALeDNA data Family Level"
+title: "rGlobi- CALeDNA 1 dataset any taxononmic level"
 output: html_document
 ---
 Install Library rglobi
@@ -13,34 +13,22 @@ import taxnomy data file and create lists for- eDNA file (we will only work we e
 ```{r}
 taxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_data/LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5_LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5.txt")
 taxonomy_only_table <-select(taxonomytable, sum.taxonomy) %>% 
-  separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus species"), sep = ";",remove=FALSE)
+  separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus_species"), sep = ";",remove=FALSE)
   #change taxon data to only have genus_spp, what rGlobi accepts as an argument
 ```
 
-fill in "" empty values in taxonomy table, move genuscolumn into genus-spp column where genus-spp is empty
+pick taxonomic rank of interest, and remove all NA/"" empty values from that column. 
 ```{r}
-genus_species_column_number <- which(colnames(taxonomy_only_table) == "genus species")
-genus_column_number <- which(colnames(taxonomy_only_table) == "genus")
+taxonomic_rank_of_interest <- "family" #Put in Qoutes the taxonomic rank: "genus","family", etc you want rGlobi to compare with.
+taxonomic_rank_column_number <- which(colnames(taxonomy_only_table) == taxonomic_rank_of_interest)
 #values used later for naming columns/rows in matrix
 
-number_eDNA_spp <-nrow(taxonomy_only_table)
+#Fill in by text (NOT using the variable taxonomic_rank_of_interest) the taxonomic rank of interest following the dollar signs '$'
+#filters out NA/"" empty cells
+taxonomy_only_table<-taxonomy_only_table[!(taxonomy_only_table$family == "" | taxonomy_only_table$family=="NA"), ]
 
-for(i in 1:number_eDNA_spp)
-  {
-    if(taxonomy_only_table[i,genus_species_column_number] == "" || taxonomy_only_table[i,genus_species_column_number] == "NA")
-    {
-      taxonomy_only_table[i,genus_species_column_number] = taxonomy_only_table[i,genus_column_number]
-      # taxonomy_only_table[i,genus_species_column_number] = "Missing Spp-genus"
-    }
-  
-    if(taxonomy_only_table[i,genus_column_number] == "" || taxonomy_only_table[i, genus_column_number] == "NA")
-    {
-      taxonomy_only_table[i,genus_column_number] = "Missing Genus"
-      taxonomy_only_table[i,genus_species_column_number] = "Missing Spp-genus"
-
-    }
-}
-
+#remove duplicate rows #write in taxonomic rank of interest as first variable in distinct(write here,)
+taxonomy_only_table<- taxonomy_only_table %>% distinct(family, .keep_all = TRUE)
 ```
 
 
@@ -54,16 +42,18 @@ Spit out some summary stats of that
 
 create dataframe/matrixs that match the length of the lists:
 ```{r}
+number_eDNA_spp <- nrow(taxonomy_only_table)
+
 #matrix to hold true false values
 BinaryMatrix <- matrix(NA, number_eDNA_spp, number_eDNA_spp)
 #add species names to the columns/rows 
-colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
-rownames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
+colnames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,taxonomic_rank_column_number]
+rownames(BinaryMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,taxonomic_rank_column_number]
 #matrix to hold interaction value 
 InteractionMatrix <- matrix(NA, number_eDNA_spp,number_eDNA_spp)
 
-colnames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
-rownames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,genus_species_column_number]
+colnames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,taxonomic_rank_column_number]
+rownames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,taxonomic_rank_column_number]
 ```
 
 
@@ -93,9 +83,8 @@ how_they_interact <-  function(rGlobiResult)
     #get_interactions_by_taxa(taxa1,taxa2, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
     Species <- rGlobiResult[1,1]
     Species2<- rGlobiResult[1,3]
-    test<-paste0(Species," ", INTERACTION, " ", Species2)
-    return(test)
-    # return(INTERACTION)
+    INTERACTION<-paste0(Species," ", INTERACTION, " ", Species2)
+    return(INTERACTION)
 }
 ```
 
@@ -104,32 +93,14 @@ take list and run it through a nested for loop to populate a matrix...
 ```{r}
 for(i in 1:number_eDNA_spp)
 {
-  if("Missing Spp-genus" == (taxonomy_only_table[i,genus_species_column_number])) #no genus-species value
-    {
-      source_species <- taxonomy_only_table[i,genus_column_number]
-     print(paste0("I no spp ","row:",i," column: ",genus_species_column_number, source_species))
-      
-    }
-       else
-       {
-        source_species <- taxonomy_only_table[i,genus_species_column_number]
-       print(paste0("I yes spp ","row:",i," column:",genus_species_column_number))
-       }
-  
+  source_species <- taxonomy_only_table[i,taxonomic_rank_column_number]
+    
   for(j in i:number_eDNA_spp)
   {
-    if("Missing Spp-genus" == (taxonomy_only_table[j,genus_species_column_number]))
-    {
-      target_species <- taxonomy_only_table[j,genus_column_number]
-     print(paste0("J no spp ","row:",j," column:",genus_species_column_number, target_species))
-    }
-    else
-    {
-      target_species<-taxonomy_only_table[j,genus_species_column_number]
-       print(paste0("J yes spp ","row:",j," column: ",genus_species_column_number))
-    }
-
-  interaction_result <-get_interactions_by_taxa(source_species, target_species, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
+  
+    target_species<-taxonomy_only_table[j,taxonomic_rank_column_number]
+      
+ interaction_result <-get_interactions_by_taxa(source_species, target_species, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
 
     if(TRUE==do_they_interact(interaction_result))
     {
@@ -146,6 +117,7 @@ for(i in 1:number_eDNA_spp)
   }
 }
 
+print("ANALYSIS COMPLETE")
 
 ```
 
@@ -160,19 +132,15 @@ sum_interactions_1group <-function(BinaryMatrix, summary_stats)
   BMcolsums <-colSums(BinaryMatrix, na.rm= TRUE) 
   BMrowsums <- rowSums(BinaryMatrix, na.rm = TRUE)
 
-  # summary_stats[1,sum_interactions_column_number] <- BMcolsums[[1]] + BMrowsums[[1]]
-  # summary_stats[1,sum_interactions_column_number]
   for(i in 1:number_of_species)
   {
     if(BinaryMatrix[i,i] == 1)    
     {
       summary_stats[i,sum_interactions_column_number] <- BMcolsums[[i]] + BMrowsums[[i]] - 1
-      print("hi-1")
     }
     else
     {
       summary_stats[[i,sum_interactions_column_number]] <- BMcolsums[[i]] + BMrowsums[[i]]
-      print("hi")
     }
      print(BMcolsums[[i]] + BMrowsums[[i]])
   }
@@ -191,8 +159,7 @@ colnames(summary_stats)[1:3] <- summary_stats_columns
 #sum will be a good starting place
 summary_stats <- sum_interactions_1group(BinaryMatrix, summary_stats)
 #function find total number of interactions a species has...
- 
-rownames(summary_stats)[1:number_eDNA_spp] <- taxonomy_only_table[,genus_species_column_number]
+rownames(summary_stats)[1:number_eDNA_spp] <- taxonomy_only_table[,taxonomic_rank_column_number]
 view(summary_stats)
 #print()
 ```

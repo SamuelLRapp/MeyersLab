@@ -41,6 +41,9 @@ for(i in 1:number_eDNA_spp)
     }
 }
 
+
+
+
 ```
 
 
@@ -102,32 +105,40 @@ how_they_interact <-  function(rGlobiResult)
 
 take list and run it through a nested for loop to populate a matrix...
 ```{r}
+# for(i in 1:number_eDNA_spp)
+# {
+#   if("Missing Spp-genus" == (taxonomy_only_table[i,genus_species_column_number])) #no genus-species value
+#     {
+#       source_species <- taxonomy_only_table[i,genus_column_number]
+#      print(paste0("I no spp ","row:",i," column: ",genus_species_column_number, source_species))
+#       
+#     }
+#        else
+#        {
+#         source_species <- taxonomy_only_table[i,genus_species_column_number]
+#        print(paste0("I yes spp ","row:",i," column:",genus_species_column_number))
+#        }
+#   
+#   for(j in i:number_eDNA_spp)
+#   {
+#     if("Missing Spp-genus" == (taxonomy_only_table[j,genus_species_column_number]))
+#     {
+#       target_species <- taxonomy_only_table[j,genus_column_number]
+#      print(paste0("J no spp ","row:",j," column:",genus_species_column_number, target_species))
+#     }
+#     else
+#     {
+#       target_species<-taxonomy_only_table[j,genus_species_column_number]
+#        print(paste0("J yes spp ","row:",j," column: ",genus_species_column_number))
+#     }
+
 for(i in 1:number_eDNA_spp)
 {
-  if("Missing Spp-genus" == (taxonomy_only_table[i,genus_species_column_number])) #no genus-species value
-    {
-      source_species <- taxonomy_only_table[i,genus_column_number]
-     print(paste0("I no spp ","row:",i," column: ",genus_species_column_number, source_species))
-      
-    }
-       else
-       {
-        source_species <- taxonomy_only_table[i,genus_species_column_number]
-       print(paste0("I yes spp ","row:",i," column:",genus_species_column_number))
-       }
+  source_species <- taxonomy_only_table[i,genus_species_column_number]
   
   for(j in i:number_eDNA_spp)
   {
-    if("Missing Spp-genus" == (taxonomy_only_table[j,genus_species_column_number]))
-    {
-      target_species <- taxonomy_only_table[j,genus_column_number]
-     print(paste0("J no spp ","row:",j," column:",genus_species_column_number, target_species))
-    }
-    else
-    {
-      target_species<-taxonomy_only_table[j,genus_species_column_number]
-       print(paste0("J yes spp ","row:",j," column: ",genus_species_column_number))
-    }
+      target_species <- taxonomy_only_table[j,genus_species_column_number]
 
   interaction_result <-get_interactions_by_taxa(source_species, target_species, showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"), otherkeys = list("limit"=1)) 
 
@@ -145,6 +156,8 @@ for(i in 1:number_eDNA_spp)
     }
   }
 }
+
+print("Complete")
 
 
 ```
