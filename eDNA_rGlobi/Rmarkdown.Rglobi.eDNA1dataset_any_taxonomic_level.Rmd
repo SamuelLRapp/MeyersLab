@@ -7,6 +7,7 @@ Install Library rglobi
 library(rglobi)
 library(tidyverse)
 library(dplyr)
+library(igraph)
 ```
 
 import taxnomy data file and create lists for- eDNA file (we will only work we eDNA results in v1) then add iNat File
@@ -171,6 +172,23 @@ print out global counts
 #species with greatest number of interactions... (could write a function that reads a t/f matrix easily)
 ```
 
+print out graphnetwork:
+```{r}
+network <- graph_from_adjacency_matrix(BinaryMatrix, mode='undirected', diag =F)
+#https://www.r-graph-gallery.com/248-igraph-plotting-parameters.html
+
+ 
+deg <- degree(network, mode="all") # Count the number of degree for each node:
+plot(network, vertex.label.cex = .75, vertex.size= deg*3,  vertex.label.color=c("black"), layout=layout.fruchterman.reingold, main="fruchterman.reingold")
+
+
+plot(network, layout=layout.random, vertex.size= deg*3, main="random")
+plot(network, layout=layout.sphere, vertex.size= deg*3, main="sphere")
+plot(network, layout=layout.circle, vertex.size= deg*3, main="circle")
+plot(network, layout=layout.random, vertex.size= deg*3, main="random")
+plot(network, layout=layout.fruchterman.reingold, vertex.size= deg*3, main="fruchterman.reingold")
+
+```
 
 
 
