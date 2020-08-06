@@ -2,46 +2,41 @@
 title: "rGlobi- CALeDNA 1 dataset any taxononmic level"
 output: html_document
 ---
-Install Library rglobi
+load/Install required Libraries
 ```{r}
 library(rglobi)
 library(tidyverse)
 library(dplyr)
 library(igraph)
+library(networkD3)
+library(visNetwork)
 ```
 
-import taxnomy data file and create lists for- eDNA file (we will only work we eDNA results in v1) then add iNat File
+Provide a path to the a CALeDNA taxonomy ASV sum by taxonomy table in .txt format.
+You can download some example data from the LA_river project here: https://data.ucedna.com/research_projects/los-angeles-river/pages/appendix
 ```{r}
 taxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_data/LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5_LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5.txt")
 taxonomy_only_table <-select(taxonomytable, sum.taxonomy) %>% 
   separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus_species"), sep = ";",remove=FALSE)
-  #change taxon data to only have genus_spp, what rGlobi accepts as an argument
 ```
 
-pick taxonomic rank of interest, and remove all NA/"" empty values from that column. 
+The previous block divided the sum.taxonomy column into seperate columns.
+Pick any one taxonomic rank of interest(ie. a column), and remove all NA/"" empty values from that column. 
 ```{r}
-taxonomic_rank_of_interest <- "family" #Put in Qoutes the taxonomic rank: "genus","family", etc you want rGlobi to compare with.
+taxonomic_rank_of_interest <- "family" #Put in Qoutes the taxonomic rank: "genus","family", etc you want rGlobi to explore!
 taxonomic_rank_column_number <- which(colnames(taxonomy_only_table) == taxonomic_rank_of_interest)
 #values used later for naming columns/rows in matrix
 
 #Fill in by text (NOT using the variable taxonomic_rank_of_interest) the taxonomic rank of interest following the dollar signs '$'
-#filters out NA/"" empty cells
+#this line filters out NA/"" empty cells 
 taxonomy_only_table<-taxonomy_only_table[!(taxonomy_only_table$family == "" | taxonomy_only_table$family=="NA"), ]
 
 #remove duplicate rows #write in taxonomic rank of interest as first variable in distinct(write here,)
 taxonomy_only_table<- taxonomy_only_table %>% distinct(family, .keep_all = TRUE)
 ```
 
-
-(this step can be skipped in V1)
-compare two lists and create 3rd list of species shared in eDNA and iNat results 
-Spit out some summary stats of that 
-```{r}
-#list vs list -> new list
-```
-
-
-create dataframe/matrixs that match the length of the lists:
+Creates matrixes who's columns and rows match the column previously picked ("family", "genus", "etc"):
+Both matrixes have the same rows and columns, but how they will be populated differentiates them.
 ```{r}
 number_eDNA_spp <- nrow(taxonomy_only_table)
 
@@ -57,8 +52,7 @@ colnames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,taxonomic_r
 rownames(InteractionMatrix)[1:number_eDNA_spp]<-taxonomy_only_table[,taxonomic_rank_column_number]
 ```
 
-
-Function outputs true or false, when given the output of the rGlobi function get_interactions_by_taxa(, , showfield = c("source_taxon_name", "interaction_type", "target_taxon_name"))
+Function returns true(1) or false(0), when given the output of the rGlobi function get_interactions_by_taxa(, , showfield = c("source_taxon_name", "interaction_type", "target_taxon_name")). This function's output populates the BinaryMatrix.
 ```{r}
 do_they_interact <-  function(rGlobiResult)
 {
@@ -75,7 +69,7 @@ do_they_interact <-  function(rGlobiResult)
 }
 ```
 
-function returns the dataframe cell that holds the first interaction type result from a rGlobi get_interactions_by_taxa. It will return NA if the species don't interact
+Function returns the a text string of rGlobi interaction by concatenating dataframe cells that holds the first interaction type result from a rGlobi get_interactions_by_taxa. Note: There may be more than 1 interaction between X and Y but we are only reporting the first Globi result. This function's output populates the InteractionMatrix.
 ```{r}
 how_they_interact <-  function(rGlobiResult)
 {
@@ -89,8 +83,9 @@ how_they_interact <-  function(rGlobiResult)
 }
 ```
 
-
-take list and run it through a nested for loop to populate a matrix...
+Nested for loops populate the BinaryMatrix and InteractionMatrix.
+The BinaryMatrix is filled with 1s, which mean Globi found a relationship, and 0s, Globi didn't find a relationship. 
+The InteractionMatrix is filled with a text value like... "species x 'preys on' spexies y", and is NA otherwise.
 ```{r}
 for(i in 1:number_eDNA_spp)
 {
@@ -107,22 +102,21 @@ for(i in 1:number_eDNA_spp)
     {
       BinaryMatrix[i,j]<-1#true
       InteractionMatrix[i,j]<-how_they_interact(interaction_result)
-      print(how_they_interact(interaction_result))
+      # print(how_they_interact(interaction_result))
     }
     else
     {
        BinaryMatrix[i,j]<-0#FALSE
        InteractionMatrix[i,j]<-"NA"
-       # print("NA")
     }
   }
 }
 
-print("ANALYSIS COMPLETE")
+print("Matrix population COMPLETE")
 
 ```
 
-sum of interactions: for results coming from comparing 1 set of species against itself
+Function: sum of interactions: Takes Populated BinaryMatrix and sums the number of interactions for each species.
 ```{r}
 sum_interactions_1group <-function(BinaryMatrix, summary_stats)
 {
@@ -147,45 +141,49 @@ sum_interactions_1group <-function(BinaryMatrix, summary_stats)
   }
   return(summary_stats) 
 }
-
 ```
 
-
-print out T/F matrix and print out 1st interaction matrix
+Summary Stats: Generate new table from BinaryMatrix. So far we only have 1 summary stat: sum of interactions...
 ```{r}
-#print()
-summary_stats<-matrix(NA, number_eDNA_spp, 3) #depends on how many variables we want to work with,
-summary_stats_columns <- c("sum_interactions", "will add more functions later", "extra column")
-colnames(summary_stats)[1:3] <- summary_stats_columns
-#sum will be a good starting place
+summary_stats<-matrix(NA, number_eDNA_spp, 3) #last field depends on how many variables we want to work with. The number, 3 in this case, must match the following two lines.
+summary_stats_columns <- c("sum_interactions", "will add more functions later", "extra column") #3 strings
+colnames(summary_stats)[1:3] <- summary_stats_columns #adding those 3 strings
 summary_stats <- sum_interactions_1group(BinaryMatrix, summary_stats)
-#function find total number of interactions a species has...
 rownames(summary_stats)[1:number_eDNA_spp] <- taxonomy_only_table[,taxonomic_rank_column_number]
 view(summary_stats)
-#print()
-```
 
-print out global counts
-```{r}
+#other potential options
 #number of interactions between groups
 #interaction rate amoung/between groups...
-#species with greatest number of interactions... (could write a function that reads a t/f matrix easily)
 ```
 
-print out graphnetwork:
+Creating Graph Networks from BinaryMatrix, using iGraph package.
 ```{r}
-network <- graph_from_adjacency_matrix(BinaryMatrix, mode='undirected', diag =F)
+network <- graph_from_adjacency_matrix(BinaryMatrix, mode='undirected', diag =F, weighted=TRUE)
+edge.list<-get.edgelist(network) #https://stackoverflow.com/questions/24742882/r-igraph-convert-a-weighted-adjacency-matrix-into-weighted-edgelist
+# edge.list2<-get.edgelist(BinaryMatrix)
 #https://www.r-graph-gallery.com/248-igraph-plotting-parameters.html
+network2 <- graph_from_adjacency_matrix(BinaryMatrix, mode='undirected', diag =F)
 
- 
+ # graph_from_adjacency_matrix?
 deg <- degree(network, mode="all") # Count the number of degree for each node:
-plot(network, vertex.label.cex = .75, vertex.size= deg*3,  vertex.label.color=c("black"), layout=layout.fruchterman.reingold, main="fruchterman.reingold")
+# plot(network, vertex.label.cex = .75, vertex.size= deg*3,  vertex.label.color=c("black"), layout=layout.fruchterman.reingold, main="fruchterman.reingold")
+# datafrane1<-as.data.frame(BinaryMatrix)
+# visNetwork(datafrane1)
+# simpleNetwork(datafrane1)
+# class(BinaryMatrix)
+# simpleNetwork(datafrane1)
+plot(network, vertex.shape="none", layout=layout.random, vertex.label.cex = deg*.25, vertex.label.color=c("black"), main="random")
+
+plot(network, vertex.shape="none", layout= layout.circle, vertex.label.cex = deg*.25, vertex.label.color=c("black"))
+
+plot(network, vertex.shape="none", layout=layout.circle, vertex.label.cex = deg*.25, vertex.label.color=c("black"))
 
 
-plot(network, layout=layout.random, vertex.size= deg*3, main="random")
 plot(network, layout=layout.sphere, vertex.size= deg*3, main="sphere")
 plot(network, layout=layout.circle, vertex.size= deg*3, main="circle")
 plot(network, layout=layout.random, vertex.size= deg*3, main="random")
+plot(network, layout=layout.random, vertex.size= deg*3) #, main="random")
 plot(network, layout=layout.fruchterman.reingold, vertex.size= deg*3, main="fruchterman.reingold")
 
 ```
