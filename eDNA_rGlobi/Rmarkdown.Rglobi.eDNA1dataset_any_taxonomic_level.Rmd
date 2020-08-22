@@ -15,7 +15,7 @@ library(visNetwork)
 Provide a path to the a CALeDNA taxonomy ASV sum by taxonomy table in .txt format.
 You can download some example data from the LA_river project here: https://data.ucedna.com/research_projects/los-angeles-river/pages/appendix
 ```{r}
-taxonomytable<-read.delim("/Users/samuelrapp/RStudio/MeyersLab/eDNA_rGlobi/LA_river_data/LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5_LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5.txt")
+taxonomytable<-read.delim("./data/LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5_LA_river_X12S_ASV_sum_by_taxonomy_70_dc_ed_min5.txt")
 taxonomy_only_table <-select(taxonomytable, sum.taxonomy) %>% 
   separate(sum.taxonomy, c("domain", "phylum", "class", "order", "family", "genus", "genus_species"), sep = ";",remove=FALSE)
 ```
